@@ -44,4 +44,4 @@ jobs:
         if: ${{ steps.check_tag.outcome == 'success' }}
         run: |
           git tag -a "$TAG_NAME" -m "QA approved commit ${{ env.commit_hash }}"
-          git push origin "$TAG_NAME"
+          git push origin "$TAG_NAME" 

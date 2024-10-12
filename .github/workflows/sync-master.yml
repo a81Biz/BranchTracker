@@ -1,0 +1,20 @@
+name: Sync master with prod
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  sync-master:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout prod
+        uses: actions/checkout@v2
+
+      - name: Push changes to master
+        run: |
+          git config --global user.email "your-email@example.com"
+          git config --global user.name "GitHub Actions"
+          git checkout -b master
+          git push origin master --force

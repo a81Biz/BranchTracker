@@ -2,6 +2,8 @@ name: Deploy to QA
 
 on:
   push:
+    branches-ignore:
+      - gh-pages
     branches:
       - qa
 

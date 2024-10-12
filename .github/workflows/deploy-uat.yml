@@ -3,7 +3,7 @@ name: Deploy to UAT
 on:
   push:
     branches-ignore:
-      - gh-pages    # Ignoramos cualquier push a gh-pages
+      - gh-pages
     branches:
       - uat
 

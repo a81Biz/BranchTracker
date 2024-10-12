@@ -1,4 +1,4 @@
-name: Sync master with prod and delete feature branch
+name: Sync master prod
 
 on:
   workflow_run:
@@ -30,21 +30,21 @@ jobs:
         run: |
           git push origin master
 
-      - name: Get the branch name from UAT
+      - name: Get the branch that deployed to UAT
         id: get_branch_name
         run: |
           BRANCH_NAME=$(git log -1 --pretty=format:"%D" | grep -oE "origin/[^,]+" | sed 's|origin/||')
           echo "Branch Name: $BRANCH_NAME"
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
 
-      - name: Get latest commit hash from UAT
+      - name: Get latest commit hash from the branch that deployed to UAT
         id: get_commit
         run: |
-          COMMIT_HASH=$(git rev-parse origin/uat)
+          COMMIT_HASH=$(git rev-parse origin/${{ env.branch_name }})
           echo "Commit Hash: $COMMIT_HASH"
           echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV
 
-      - name: Validate commit matches UAT and delete branch
+      - name: Validate commit matches and delete branch
         run: |
           LATEST_COMMIT=$(git rev-parse origin/${{ env.branch_name }})
           if [ "$LATEST_COMMIT" == "${{ env.commit_hash }}" ]; then

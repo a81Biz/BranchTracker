@@ -1,12 +1,14 @@
 name: Sync master with prod
 
 on:
-  push:
+  pull_request:
     branches:
       - prod
+    types: [closed]  # Solo cuando el pull request está cerrado (es decir, mergeado)
 
 jobs:
   sync-master:
+    if: ${{ github.event.pull_request.merged == true }}  # Aseguramos que el PR fue mergeado
     runs-on: ubuntu-latest
     steps:
       - name: Checkout prod branch
@@ -18,8 +20,7 @@ jobs:
         run: |
           git config --global user.email "${{ secrets.EMAIL }}"
           git config --global user.name "${{ secrets.REPO_ACTOR }}"
-          git checkout master
+          git checkout main
           git merge prod
-          git push origin master
-
+          git push origin main
 

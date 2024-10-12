@@ -58,7 +58,7 @@ const BranchDetails = ({ branch, repository }) => {
     };
 
     fetchCommitDetails();
-  }, [branch, repository]);
+  }, [branch, repository, GITHUB_TOKEN]);
 
   if (loading) return <div>Loading branch details...</div>;
   if (error) return <div>{error}</div>;

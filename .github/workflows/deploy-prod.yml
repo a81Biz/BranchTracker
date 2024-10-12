@@ -1,4 +1,4 @@
-name: Deploy to PROD
+name: Deploy to prod
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - prod
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -23,9 +23,9 @@ jobs:
       - name: Build the application
         run: npm run build
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to Production
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
-          cname: prod.sitio.com
+          cname: sitio.com

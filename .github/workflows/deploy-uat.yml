@@ -1,4 +1,4 @@
-name: Validate and Deploy to UAT
+name: Deploy to UAT
 
 on:
   pull_request:
@@ -25,7 +25,7 @@ jobs:
       - name: Find the latest approved tag for the branch
         id: find_tag
         run: |
-          # Buscar el tag en ambos formatos: con y sin estado
+          # Busca el tag en ambos formatos: con y sin estado
           TAG_NAME_WITH_STATE=$(git tag -l "${{ env.branch_name }}-qa-approved*" | tail -n 1)
           TAG_NAME_NO_STATE=$(echo "${{ env.branch_name }}" | sed 's/\/[a-zA-Z0-9_-]*//' | xargs -I{} git tag -l "{}-qa-approved*" | tail -n 1)
           # Prioriza el tag con estado, pero si no existe, usa el sin estado
@@ -35,14 +35,26 @@ jobs:
             echo "tag_name=$TAG_NAME_WITH_STATE" >> $GITHUB_ENV
           fi
 
-      - name: Validate commit from DEV matches tagged commit from QA
-        id: check_commit
+      - name: Get commit from the approved tag in QA
+        id: get_qa_commit
         run: |
           QA_COMMIT=$(git rev-parse ${{ env.tag_name }})
+          echo "qa_commit=$QA_COMMIT" >> $GITHUB_ENV
+
+      - name: Get latest commit from DEV
+        id: get_dev_commit
+        run: |
           DEV_COMMIT=$(git rev-parse origin/${{ env.branch_name }})
-          if [ "$QA_COMMIT" != "$DEV_COMMIT" ]; then
+          echo "dev_commit=$DEV_COMMIT" >> $GITHUB_ENV
+
+      - name: Validate commit from DEV matches the tagged commit from QA
+        id: check_commit
+        run: |
+          if [ "${{ env.qa_commit }}" != "${{ env.dev_commit }}" ]; then
             echo "The commit in DEV does not match the approved commit in QA. Exiting."
             exit 1
+          else
+            echo "The commit in DEV matches the approved commit in QA."
           fi
 
       - name: Deploy to UAT

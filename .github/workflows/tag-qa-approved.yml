@@ -1,0 +1,32 @@
+name: Tag Approved QA Commit
+
+on:
+  push:
+    branches:
+      - qa
+
+jobs:
+  tag-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Git user
+        run: |
+          git config --global user.email "${{ secrets.EMAIL }}"
+          git config --global user.name "${{ secrets.REPO_ACTOR }}"
+
+      - name: Get the branch name
+        id: vars
+        run: |
+          BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}")
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Create and push tag
+        env:
+          BRANCH_NAME: ${{ env.branch_name }}
+        run: |
+          TAG_NAME="${BRANCH_NAME}-qa-approved-$(date +'%Y%m%d%H%M%S')"
+          git tag -a $TAG_NAME -m "QA approved $BRANCH_NAME"
+          git push origin $TAG_NAME

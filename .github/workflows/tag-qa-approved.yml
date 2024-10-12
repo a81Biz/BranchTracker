@@ -35,5 +35,5 @@ jobs:
         run: |
           TAG_NAME="${{ env.branch_name }}-qa-approved-${{ env.commit_hash }}"
           echo "Creating tag: $TAG_NAME"
-          git tag -a -- "$TAG_NAME" -m "QA approved $BRANCH_NAME on commit ${{ env.commit_hash }}"
-          git push origin --tags
+          git tag -a "$TAG_NAME" -m "QA approved $TAG_NAME"
+          git push origin "$TAG_NAME"

@@ -9,31 +9,41 @@ on:
 jobs:
   tag-commit:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Git user
-        run: |
-          git config --global user.email "${{ secrets.EMAIL }}"
-          git config --global user.name "${{ secrets.REPO_ACTOR }}"
+      - name: Fetch all tags
+        run: git fetch --all --tags
 
-      - name: Get the branch name
-        id: vars
-        run: |
-          BRANCH_NAME="${{ github.event.workflow_run.head_branch }}"
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
-
-      - name: Get the latest commit hash from QA
+      - name: Get commit hash
         id: get_commit
         run: |
           COMMIT_HASH=$(git rev-parse HEAD)
-          echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV
+          echo "Commit Hash: $COMMIT_HASH"
+          echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV  # Guardamos el commit hash en el entorno
 
-      - name: Create and push tag
+      - name: Create Tag Name
+        id: create_tag
         run: |
-          TAG_NAME="${{ env.branch_name }}-qa-approved-${{ env.commit_hash }}"
-          echo "Creating tag: $TAG_NAME"
-          git tag -a "$TAG_NAME" -m "QA approved $TAG_NAME"
-          git push origin "$TAG_NAME"
+          TAG_NAME="qa-approved-${{ env.commit_hash }}"
+          echo "Tag Name: $TAG_NAME"
+          echo "tag_name=$TAG_NAME" >> $GITHUB_ENV  # Guardamos el tag name en el entorno
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME already exists. Skipping tag creation."
+            exit 0
+          else
+            echo "Tag $TAG_NAME does not exist. Proceeding with creation."
+          fi
+
+      - name: Create and Push Tag
+        if: ${{ steps.check_tag.outcome == 'success' }}
+        run: |
+          git config --global user.email "${{ secrets.EMAIL }}"
+          git config --global user.name "${{ secrets.REPO_ACTOR }}"
+          git tag -a "${{ env.tag_name }}" -m "QA approved commit ${{ env.commit_hash }}"
+          git push origin "${{ env.tag_name }}"

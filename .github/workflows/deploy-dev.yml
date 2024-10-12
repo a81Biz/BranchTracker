@@ -1,27 +1,39 @@
 name: Deploy to DEV
-true:
+
+on:
+  # Ejecutar el workflow cuando haya un push a la rama dev
   push:
     branches:
-    - dev
+      - dev
+
+  # Ejecutar el workflow cuando haya un pull request hacia la rama dev
+  pull_request:
+    branches:
+      - dev
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-    - name: Install dependencies
-      run: npm install
-    - env:
-        REACT_APP_SECRET_GITHUB_TOKEN: ${{ secrets.SECRET_GITHUB_TOKEN }}
-      name: Build the application
-      run: npm run build
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        cname: dev.sitio.com
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the application
+        env:
+          REACT_APP_SECRET_GITHUB_TOKEN: ${{ secrets.SECRET_GITHUB_TOKEN }}
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          cname: dev.sitio.com

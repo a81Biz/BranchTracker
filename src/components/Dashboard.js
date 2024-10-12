@@ -30,7 +30,7 @@ const Dashboard = ({ repository }) => {
     };
 
     fetchBranches();
-  }, [repository]);
+  }, [repository, GITHUB_TOKEN]);
 
   if (loading) return <div>Loading branches...</div>;
   if (error) return <div>{error}</div>;

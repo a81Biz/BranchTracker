@@ -1,30 +1,53 @@
 name: Deploy to UAT
 
 on:
-  push:
+  pull_request:
     branches:
       - uat
 
 jobs:
-  build:
+  validate-commit:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
+      - name: Fetch all tags from origin
+        run: |
+          git fetch --tags
 
-      - name: Install dependencies
-        run: npm install
+      - name: Get the branch name
+        id: get_branch_name
+        run: |
+          BRANCH_NAME=$(echo "${GITHUB_HEAD_REF}")
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
 
-      - name: Build the application
-        run: npm run build
+      - name: Find the latest approved tag for the branch
+        id: find_tag
+        run: |
+          # Buscar el tag en ambos formatos: con y sin estado
+          TAG_NAME_WITH_STATE=$(git tag -l "${{ env.branch_name }}-qa-approved*" | tail -n 1)
+          TAG_NAME_NO_STATE=$(echo "${{ env.branch_name }}" | sed 's/\/[a-zA-Z0-9_-]*//' | xargs -I{} git tag -l "{}-qa-approved*" | tail -n 1)
+          # Prioriza el tag con estado, pero si no existe, usa el sin estado
+          if [ -z "$TAG_NAME_WITH_STATE" ]; then
+            echo "tag_name=$TAG_NAME_NO_STATE" >> $GITHUB_ENV
+          else
+            echo "tag_name=$TAG_NAME_WITH_STATE" >> $GITHUB_ENV
+          fi
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Validate commit from DEV matches tagged commit from QA
+        id: check_commit
+        run: |
+          QA_COMMIT=$(git rev-parse ${{ env.tag_name }})
+          DEV_COMMIT=$(git rev-parse origin/${{ env.branch_name }})
+          if [ "$QA_COMMIT" != "$DEV_COMMIT" ]; then
+            echo "The commit in DEV does not match the approved commit in QA. Exiting."
+            exit 1
+          fi
+
+      - name: Deploy to UAT
+        if: success()
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build

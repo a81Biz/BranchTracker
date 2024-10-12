@@ -25,20 +25,24 @@ jobs:
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
           else
-            BRANCH_NAME="${{ github.event.ref }}"  # Usar el nombre de la rama desde el evento push
+            BRANCH_NAME="${{ github.ref_name }}"  # Usar el nombre de la rama desde el evento push
           fi
+          echo "Branch Name: $BRANCH_NAME"
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
 
       - name: Get the latest commit hash from the source branch
         id: get_commit
         run: |
-          COMMIT_HASH=$(git rev-parse origin/${{ env.branch_name }})
+          echo "Fetching commit hash from branch: ${{ env.branch_name }}"
+          COMMIT_HASH=$(git rev-parse origin/${{ env.branch_name }}) || exit 1
+          echo "Commit Hash: $COMMIT_HASH"
           echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV
 
       - name: Validate commit exists in QA history
         run: |
           # Obtener el historial de commits de QA
           QA_COMMITS=$(git log origin/qa --pretty=format:"%H")
+          echo "QA Commits: $QA_COMMITS"
           
           # Verificar si el commit que se intenta desplegar en UAT está en la lista de QA
           if echo "$QA_COMMITS" | grep -q "${{ env.commit_hash }}"; then

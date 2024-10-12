@@ -30,13 +30,6 @@ jobs:
           echo "Branch Name: $BRANCH_NAME"
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
 
-      - name: Check if branch is gh-pages
-        run: |
-          if [[ "${{ env.branch_name }}" == "gh-pages" ]]; then
-            echo "This is gh-pages branch. Skipping deployment."
-            exit 0
-          fi
-
       - name: Get the latest commit hash from the source branch
         id: get_commit
         run: |
@@ -44,6 +37,13 @@ jobs:
           COMMIT_HASH=$(git rev-parse origin/${{ env.branch_name }}) || exit 1
           echo "Commit Hash: $COMMIT_HASH"
           echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV
+
+      - name: Check if commit has already been deployed
+        run: |
+          if git log origin/gh-pages --pretty=format:"%H" | grep -q "${{ env.commit_hash }}"; then
+            echo "Commit ${{ env.commit_hash }} has already been deployed. Exiting."
+            exit 0
+          fi
 
       - name: Validate commit exists in QA history
         run: |

@@ -13,27 +13,41 @@ jobs:
   validate-commit:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Fetch all tags and branches
-      run: git fetch --all --tags
-    - id: get_branch_name
-      name: Get the branch name
-      run: BRANCH_NAME=$(echo "${GITHUB_HEAD_REF}") && echo "branch_name=$BRANCH_NAME"
-        >> $GITHUB_ENV
-    - id: get_commit
-      name: Get the latest commit hash from UAT
-      run: COMMIT_HASH=$(git rev-parse origin/${{ env.branch_name }}) && echo "commit_hash=$COMMIT_HASH"
-        >> $GITHUB_ENV
-    - name: Validate commit exists in QA history
-      run: QA_COMMITS=$(git log origin/qa --pretty=format:"%H") && if echo "$QA_COMMITS"
-        | grep -q "${{ env.commit_hash }}"; then echo "Commit ${{ env.commit_hash
-        }} exists in QA history."; else echo "Commit ${{ env.commit_hash }} does not
-        exist in QA history. Exiting."; exit 1; fi
-    - if: success()
-      name: Deploy to UAT
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        cname: uat.sitio.com
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Fetch all tags and branches
+        run: git fetch --all --tags
+
+      - name: Get the branch name
+        id: get_branch_name
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Get the latest commit hash from UAT
+        id: get_commit
+        run: |
+          COMMIT_HASH=$(git rev-parse origin/${{ env.branch_name }})
+          echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV
+
+      - name: Validate commit exists in QA history
+        run: |
+          # Obtener el historial de commits de QA
+          QA_COMMITS=$(git log origin/qa --pretty=format:"%H")
+          
+          # Verificar si el commit que se intenta desplegar en UAT está en la lista de QA
+          if echo "$QA_COMMITS" | grep -q "${{ env.commit_hash }}"; then
+            echo "Commit ${{ env.commit_hash }} exists in QA history."
+          else
+            echo "Commit ${{ env.commit_hash }} does not exist in QA history. Exiting."
+            exit 1
+          fi
+
+      - name: Deploy to UAT
+        if: success()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          cname: uat.sitio.com

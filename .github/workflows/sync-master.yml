@@ -33,7 +33,7 @@ jobs:
       - name: Get the branch that deployed to UAT
         id: get_branch_name
         run: |
-          BRANCH_NAME=$(git log -1 --pretty=format:"%D" | grep -oE "origin/[^,]+" | sed 's|origin/||')
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
           echo "Branch Name: $BRANCH_NAME"
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
 
@@ -49,7 +49,7 @@ jobs:
           LATEST_COMMIT=$(git rev-parse origin/${{ env.branch_name }})
           if [ "$LATEST_COMMIT" == "${{ env.commit_hash }}" ]; then
             echo "Commit in UAT matches. Deleting branch ${{ env.branch_name }}."
-            git push origin --delete ${{ env.branch_name }}
+            echo "git push origin --delete ${{ env.branch_name }}"
           else
             echo "Commit in UAT does not match. Skipping branch deletion."
           fi

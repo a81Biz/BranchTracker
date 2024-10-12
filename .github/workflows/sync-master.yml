@@ -9,12 +9,17 @@ jobs:
   sync-master:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout prod
+      - name: Checkout prod branch
         uses: actions/checkout@v4
+        with:
+          ref: prod
 
-      - name: Push changes to master
+      - name: Sync master with prod
         run: |
           git config --global user.email "${{ secrets.EMAIL }}"
           git config --global user.name "${{ secrets.REPO_ACTOR }}"
-          git checkout -b master
-          git push origin master --force
+          git checkout master
+          git merge prod
+          git push origin master
+
+

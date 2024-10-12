@@ -1,6 +1,12 @@
 name: Deploy to UAT
 
 on:
+  # Ejecutar cuando se haga un push a la rama uat
+  push:
+    branches:
+      - uat
+
+  # Ejecutar cuando se haga un pull request hacia la rama uat
   pull_request:
     branches:
       - uat
@@ -12,9 +18,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Fetch all tags from origin
+      - name: Fetch all branches and tags
         run: |
-          git fetch --tags
+          git fetch origin --all --tags
 
       - name: Get the branch name
         id: get_branch_name
@@ -25,10 +31,10 @@ jobs:
       - name: Find the latest approved tag for the branch
         id: find_tag
         run: |
-          # Busca el tag en ambos formatos: con y sin estado
+          # Buscar el tag con estado o sin estado
           TAG_NAME_WITH_STATE=$(git tag -l "${{ env.branch_name }}-qa-approved*" | tail -n 1)
           TAG_NAME_NO_STATE=$(echo "${{ env.branch_name }}" | sed 's/\/[a-zA-Z0-9_-]*//' | xargs -I{} git tag -l "{}-qa-approved*" | tail -n 1)
-          # Prioriza el tag con estado, pero si no existe, usa el sin estado
+          # Usar el tag con estado si existe, sino usar el sin estado
           if [ -z "$TAG_NAME_WITH_STATE" ]; then
             echo "tag_name=$TAG_NAME_NO_STATE" >> $GITHUB_ENV
           else
@@ -40,6 +46,10 @@ jobs:
         run: |
           QA_COMMIT=$(git rev-parse ${{ env.tag_name }})
           echo "qa_commit=$QA_COMMIT" >> $GITHUB_ENV
+
+      - name: Checkout DEV branch to get latest commit
+        run: |
+          git checkout origin/${{ env.branch_name }}
 
       - name: Get latest commit from DEV
         id: get_dev_commit

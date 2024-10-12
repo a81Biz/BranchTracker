@@ -1,12 +1,10 @@
 name: Deploy to UAT
 
 on:
-  # Ejecutar cuando se haga un push a la rama uat
   push:
     branches:
       - uat
 
-  # Ejecutar cuando se haga un pull request hacia la rama uat
   pull_request:
     branches:
       - uat
@@ -18,9 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Fetch all branches and tags
+      - name: Fetch all tags
         run: |
-          git fetch origin --all --tags
+          git fetch --tags
 
       - name: Get the branch name
         id: get_branch_name
@@ -31,10 +29,8 @@ jobs:
       - name: Find the latest approved tag for the branch
         id: find_tag
         run: |
-          # Buscar el tag con estado o sin estado
           TAG_NAME_WITH_STATE=$(git tag -l "${{ env.branch_name }}-qa-approved*" | tail -n 1)
           TAG_NAME_NO_STATE=$(echo "${{ env.branch_name }}" | sed 's/\/[a-zA-Z0-9_-]*//' | xargs -I{} git tag -l "{}-qa-approved*" | tail -n 1)
-          # Usar el tag con estado si existe, sino usar el sin estado
           if [ -z "$TAG_NAME_WITH_STATE" ]; then
             echo "tag_name=$TAG_NAME_NO_STATE" >> $GITHUB_ENV
           else

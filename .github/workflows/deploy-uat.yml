@@ -29,18 +29,29 @@ jobs:
       - name: Find the latest approved tag for the branch
         id: find_tag
         run: |
+          # Buscar el tag con y sin estado
           TAG_NAME_WITH_STATE=$(git tag -l "${{ env.branch_name }}-qa-approved*" | tail -n 1)
           TAG_NAME_NO_STATE=$(echo "${{ env.branch_name }}" | sed 's/\/[a-zA-Z0-9_-]*//' | xargs -I{} git tag -l "{}-qa-approved*" | tail -n 1)
-          if [ -z "$TAG_NAME_WITH_STATE" ]; then
-            echo "tag_name=$TAG_NAME_NO_STATE" >> $GITHUB_ENV
-          else
+
+          if [ -z "$TAG_NAME_WITH_STATE" ] && [ -z "$TAG_NAME_NO_STATE" ]; then
+            echo "No approved tag found for the branch in QA. Exiting."
+            exit 1
+          elif [ -n "$TAG_NAME_WITH_STATE" ]; then
+            echo "Using tag: $TAG_NAME_WITH_STATE"
             echo "tag_name=$TAG_NAME_WITH_STATE" >> $GITHUB_ENV
+          else
+            echo "Using tag: $TAG_NAME_NO_STATE"
+            echo "tag_name=$TAG_NAME_NO_STATE" >> $GITHUB_ENV
           fi
 
       - name: Get commit from the approved tag in QA
         id: get_qa_commit
         run: |
           QA_COMMIT=$(git rev-parse ${{ env.tag_name }})
+          if [ -z "$QA_COMMIT" ]; then
+            echo "Could not resolve commit for tag ${{ env.tag_name }}. Exiting."
+            exit 1
+          fi
           echo "qa_commit=$QA_COMMIT" >> $GITHUB_ENV
 
       - name: Checkout DEV branch

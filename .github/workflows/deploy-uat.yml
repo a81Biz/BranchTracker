@@ -43,14 +43,14 @@ jobs:
           QA_COMMIT=$(git rev-parse ${{ env.tag_name }})
           echo "qa_commit=$QA_COMMIT" >> $GITHUB_ENV
 
-      - name: Checkout DEV branch to get latest commit
+      - name: Checkout DEV branch
         run: |
-          git checkout origin/${{ env.branch_name }}
+          git checkout refs/remotes/origin/${{ env.branch_name }}
 
       - name: Get latest commit from DEV
         id: get_dev_commit
         run: |
-          DEV_COMMIT=$(git rev-parse origin/${{ env.branch_name }})
+          DEV_COMMIT=$(git rev-parse refs/remotes/origin/${{ env.branch_name }})
           echo "dev_commit=$DEV_COMMIT" >> $GITHUB_ENV
 
       - name: Validate commit from DEV matches the tagged commit from QA

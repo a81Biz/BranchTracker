@@ -21,14 +21,14 @@ jobs:
         run: |
           COMMIT_HASH=$(git rev-parse HEAD)
           echo "Commit Hash: $COMMIT_HASH"
-          echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV
+          echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV  # Guardamos el commit hash en el entorno
 
       - name: Create Tag Name
         id: create_tag
         run: |
           TAG_NAME="qa-approved-${{ env.commit_hash }}"
           echo "Tag Name: $TAG_NAME"
-          echo "tag_name=$TAG_NAME" >> $GITHUB_ENV
+          echo "tag_name=$TAG_NAME" >> $GITHUB_ENV  # Guardamos el tag name en el entorno
 
       - name: Check if tag exists
         id: check_tag
@@ -43,5 +43,5 @@ jobs:
       - name: Create and Push Tag
         if: ${{ steps.check_tag.outcome == 'success' }}
         run: |
-          git tag -a "$TAG_NAME" -m "QA approved commit ${{ env.commit_hash }}"
-          git push origin "$TAG_NAME"
+          git tag -a "${{ env.tag_name }}" -m "QA approved commit ${{ env.commit_hash }}"
+          git push origin "${{ env.tag_name }}"

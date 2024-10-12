@@ -1,58 +1,76 @@
 name: Deploy to UAT
-true:
+
+on:
+  # Ejecutar cuando se haga un push a la rama uat
+  push:
+    branches:
+      - uat
+
+  # Ejecutar cuando se haga un pull request hacia la rama uat
   pull_request:
     branches:
-    - uat
+      - uat
+
 jobs:
   validate-commit:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Fetch all tags from origin
-      run: 'git fetch --tags
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-        '
-    - id: get_branch_name
-      name: Get the branch name
-      run: 'BRANCH_NAME=$(echo "${GITHUB_HEAD_REF}")
+      - name: Fetch all branches and tags
+        run: |
+          git fetch origin --all --tags
 
-        echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
+      - name: Get the branch name
+        id: get_branch_name
+        run: |
+          BRANCH_NAME=$(echo "${GITHUB_HEAD_REF}")
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
 
-        '
-    - id: find_tag
-      name: Find the latest approved tag for the branch
-      run: "# Busca el tag en ambos formatos: con y sin estado\nTAG_NAME_WITH_STATE=$(git\
-        \ tag -l \"${{ env.branch_name }}-qa-approved*\" | tail -n 1)\nTAG_NAME_NO_STATE=$(echo\
-        \ \"${{ env.branch_name }}\" | sed 's/\\/[a-zA-Z0-9_-]*//' | xargs -I{} git\
-        \ tag -l \"{}-qa-approved*\" | tail -n 1)\n# Prioriza el tag con estado, pero\
-        \ si no existe, usa el sin estado\nif [ -z \"$TAG_NAME_WITH_STATE\" ]; then\n\
-        \  echo \"tag_name=$TAG_NAME_NO_STATE\" >> $GITHUB_ENV\nelse\n  echo \"tag_name=$TAG_NAME_WITH_STATE\"\
-        \ >> $GITHUB_ENV\nfi\n"
-    - id: get_qa_commit
-      name: Get commit from the approved tag in QA
-      run: 'QA_COMMIT=$(git rev-parse ${{ env.tag_name }})
+      - name: Find the latest approved tag for the branch
+        id: find_tag
+        run: |
+          # Buscar el tag con estado o sin estado
+          TAG_NAME_WITH_STATE=$(git tag -l "${{ env.branch_name }}-qa-approved*" | tail -n 1)
+          TAG_NAME_NO_STATE=$(echo "${{ env.branch_name }}" | sed 's/\/[a-zA-Z0-9_-]*//' | xargs -I{} git tag -l "{}-qa-approved*" | tail -n 1)
+          # Usar el tag con estado si existe, sino usar el sin estado
+          if [ -z "$TAG_NAME_WITH_STATE" ]; then
+            echo "tag_name=$TAG_NAME_NO_STATE" >> $GITHUB_ENV
+          else
+            echo "tag_name=$TAG_NAME_WITH_STATE" >> $GITHUB_ENV
+          fi
 
-        echo "qa_commit=$QA_COMMIT" >> $GITHUB_ENV
+      - name: Get commit from the approved tag in QA
+        id: get_qa_commit
+        run: |
+          QA_COMMIT=$(git rev-parse ${{ env.tag_name }})
+          echo "qa_commit=$QA_COMMIT" >> $GITHUB_ENV
 
-        '
-    - id: get_dev_commit
-      name: Get latest commit from DEV
-      run: 'DEV_COMMIT=$(git rev-parse origin/${{ env.branch_name }})
+      - name: Checkout DEV branch to get latest commit
+        run: |
+          git checkout origin/${{ env.branch_name }}
 
-        echo "dev_commit=$DEV_COMMIT" >> $GITHUB_ENV
+      - name: Get latest commit from DEV
+        id: get_dev_commit
+        run: |
+          DEV_COMMIT=$(git rev-parse origin/${{ env.branch_name }})
+          echo "dev_commit=$DEV_COMMIT" >> $GITHUB_ENV
 
-        '
-    - id: check_commit
-      name: Validate commit from DEV matches the tagged commit from QA
-      run: "if [ \"${{ env.qa_commit }}\" != \"${{ env.dev_commit }}\" ]; then\n \
-        \ echo \"The commit in DEV does not match the approved commit in QA. Exiting.\"\
-        \n  exit 1\nelse\n  echo \"The commit in DEV matches the approved commit in\
-        \ QA.\"\nfi\n"
-    - if: success()
-      name: Deploy to UAT
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        cname: uat.sitio.com
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build
+      - name: Validate commit from DEV matches the tagged commit from QA
+        id: check_commit
+        run: |
+          if [ "${{ env.qa_commit }}" != "${{ env.dev_commit }}" ]; then
+            echo "The commit in DEV does not match the approved commit in QA. Exiting."
+            exit 1
+          else
+            echo "The commit in DEV matches the approved commit in QA."
+          fi
+
+      - name: Deploy to UAT
+        if: success()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          cname: UAT.sitio.com

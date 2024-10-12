@@ -13,71 +13,27 @@ jobs:
   validate-commit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Fetch all tags
-        run: |
-          git fetch --tags
-
-      - name: Get the branch name
-        id: get_branch_name
-        run: |
-          BRANCH_NAME=$(echo "${GITHUB_HEAD_REF}")
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
-
-      - name: Find the latest approved tag for the branch
-        id: find_tag
-        run: |
-          # Buscar el tag con y sin estado
-          TAG_NAME_WITH_STATE=$(git tag -l "${{ env.branch_name }}-qa-approved*" | tail -n 1)
-          TAG_NAME_NO_STATE=$(echo "${{ env.branch_name }}" | sed 's/\/[a-zA-Z0-9_-]*//' | xargs -I{} git tag -l "{}-qa-approved*" | tail -n 1)
-
-          if [ -z "$TAG_NAME_WITH_STATE" ] && [ -z "$TAG_NAME_NO_STATE" ]; then
-            echo "No approved tag found for the branch in QA. Exiting."
-            exit 1
-          elif [ -n "$TAG_NAME_WITH_STATE" ]; then
-            echo "Using tag: $TAG_NAME_WITH_STATE"
-            echo "tag_name=$TAG_NAME_WITH_STATE" >> $GITHUB_ENV
-          else
-            echo "Using tag: $TAG_NAME_NO_STATE"
-            echo "tag_name=$TAG_NAME_NO_STATE" >> $GITHUB_ENV
-          fi
-
-      - name: Get commit from the approved tag in QA
-        id: get_qa_commit
-        run: |
-          QA_COMMIT=$(git rev-parse ${{ env.tag_name }})
-          if [ -z "$QA_COMMIT" ]; then
-            echo "Could not resolve commit for tag ${{ env.tag_name }}. Exiting."
-            exit 1
-          fi
-          echo "qa_commit=$QA_COMMIT" >> $GITHUB_ENV
-
-      - name: Checkout DEV branch
-        run: |
-          git checkout refs/remotes/origin/${{ env.branch_name }}
-
-      - name: Get latest commit from DEV
-        id: get_dev_commit
-        run: |
-          DEV_COMMIT=$(git rev-parse refs/remotes/origin/${{ env.branch_name }})
-          echo "dev_commit=$DEV_COMMIT" >> $GITHUB_ENV
-
-      - name: Validate commit from DEV matches the tagged commit from QA
-        id: check_commit
-        run: |
-          if [ "${{ env.qa_commit }}" != "${{ env.dev_commit }}" ]; then
-            echo "The commit in DEV does not match the approved commit in QA. Exiting."
-            exit 1
-          else
-            echo "The commit in DEV matches the approved commit in QA."
-          fi
-
-      - name: Deploy to UAT
-        if: success()
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
-          cname: uat.sitio.com
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Fetch all tags and branches
+      run: git fetch --all --tags
+    - id: get_branch_name
+      name: Get the branch name
+      run: BRANCH_NAME=$(echo "${GITHUB_HEAD_REF}") && echo "branch_name=$BRANCH_NAME"
+        >> $GITHUB_ENV
+    - id: get_commit
+      name: Get the latest commit hash from UAT
+      run: COMMIT_HASH=$(git rev-parse origin/${{ env.branch_name }}) && echo "commit_hash=$COMMIT_HASH"
+        >> $GITHUB_ENV
+    - name: Validate commit exists in QA history
+      run: QA_COMMITS=$(git log origin/qa --pretty=format:"%H") && if echo "$QA_COMMITS"
+        | grep -q "${{ env.commit_hash }}"; then echo "Commit ${{ env.commit_hash
+        }} exists in QA history."; else echo "Commit ${{ env.commit_hash }} does not
+        exist in QA history. Exiting."; exit 1; fi
+    - if: success()
+      name: Deploy to UAT
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        cname: uat.sitio.com
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build

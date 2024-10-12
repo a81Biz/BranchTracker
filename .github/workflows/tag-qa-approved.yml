@@ -1,9 +1,10 @@
 name: Tag Approved QA Commit
 
 on:
-  pull_request:
-    branches:
-      - qa
+  workflow_run:
+    workflows: ["Deploy to QA"]
+    types:
+      - completed
 
 jobs:
   tag-commit:
@@ -25,7 +26,7 @@ jobs:
       - name: Create Tag Name
         id: create_tag
         run: |
-          TAG_NAME="qa-qa-approved-${{ env.commit_hash }}"
+          TAG_NAME="qa-approved-${{ env.commit_hash }}"
           echo "Tag Name: $TAG_NAME"
           echo "tag_name=$TAG_NAME" >> $GITHUB_ENV
 
@@ -42,5 +43,5 @@ jobs:
       - name: Create and Push Tag
         if: ${{ steps.check_tag.outcome == 'success' }}
         run: |
-          git tag -a "$TAG_NAME" -m "QA approved $BRANCH_NAME on commit ${{ env.commit_hash }}"
+          git tag -a "$TAG_NAME" -m "QA approved commit ${{ env.commit_hash }}"
           git push origin "$TAG_NAME"

@@ -2,8 +2,6 @@ name: Deploy to UAT
 
 on:
   push:
-    branches-ignore:
-      - gh-pages    # Ignoramos cualquier push a gh-pages
     branches:
       - uat
 
@@ -31,6 +29,13 @@ jobs:
           fi
           echo "Branch Name: $BRANCH_NAME"
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Check if branch is gh-pages
+        run: |
+          if [[ "${{ env.branch_name }}" == "gh-pages" ]]; then
+            echo "This is gh-pages branch. Skipping deployment."
+            exit 0
+          fi
 
       - name: Get the latest commit hash from the source branch
         id: get_commit

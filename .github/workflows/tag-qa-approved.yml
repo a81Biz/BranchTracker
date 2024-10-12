@@ -1,26 +1,28 @@
 name: Tag Approved QA Commit
 
 on:
-  push:
-    branches:
-      - qa
+  workflow_run:
+    workflows: ["Deploy to QA"]
+    types:
+      - completed
 
 jobs:
   tag-commit:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Git user
         run: |
-          git config --global user.email "${{ secrets.EMAIL }}"
-          git config --global user.name "${{ secrets.REPO_ACTOR }}"
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
 
       - name: Get the branch name
         id: vars
         run: |
-          BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}")
+          BRANCH_NAME=$(echo "${GITHUB_HEAD_REF}")
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
 
       - name: Create and push tag

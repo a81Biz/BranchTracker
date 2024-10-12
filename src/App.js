@@ -33,7 +33,7 @@ const App = () => {
     };
 
     fetchRepositories();
-  }, []);
+  }, [GITHUB_TOKEN]);
 
   const handleRepoSelect = (repo) => {
     setSelectedRepo(repo);

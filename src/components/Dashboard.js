@@ -6,6 +6,7 @@ const Dashboard = ({ repository }) => {
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [environments, setEnvironments] = useState([]);
 
   const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
 
@@ -22,6 +23,7 @@ const Dashboard = ({ repository }) => {
           }
         );
         setBranches(response.data);
+        determineEnvironments(response.data);
       } catch (err) {
         setError('Error fetching branches');
       } finally {
@@ -30,21 +32,58 @@ const Dashboard = ({ repository }) => {
     };
 
     fetchBranches();
-  }, [repository]);
+  }, [repository, GITHUB_TOKEN]);
+
+  const determineEnvironments = (branches) => {
+    const environmentNames = ['dev', 'qa', 'uat', 'prod'];
+    const detectedEnvironments = [];
+
+    environmentNames.forEach((env) => {
+      const branch = branches.find((branch) => branch.name.toLowerCase() === env);
+
+      if (branch) {
+        detectedEnvironments.push({ name: env.toUpperCase(), branch });
+      }
+    });
+
+    // Si no se detectan entornos específicos, busca la rama main o master
+    if (detectedEnvironments.length === 0) {
+      const mainBranch = branches.find(
+        (branch) => branch.name === 'main' || branch.name === 'master'
+      );
+
+      if (mainBranch) {
+        setEnvironments([{ name: 'Main or Master', branch: mainBranch }]);
+      } else {
+        setEnvironments(['No Active Environments']);
+      }
+    } else {
+      setEnvironments(detectedEnvironments);
+    }
+  };
 
   if (loading) return <div>Loading branches...</div>;
   if (error) return <div>{error}</div>;
 
   return (
     <div style={{ display: 'flex', flex: 1, padding: '10px' }}>
-      {['DEV', 'QA', 'PROD'].map((env) => (
-        <EnvironmentColumn
-          key={env}
-          environment={env}
-          branches={branches}
-          repository={repository}
-        />
-      ))}
+      {environments.map((env) =>
+        typeof env === 'string' ? (
+          <EnvironmentColumn
+            key={env}
+            environment={env}
+            branches={branches}
+            repository={repository}
+          />
+        ) : (
+          <EnvironmentColumn
+            key={env.name}
+            environment={env.name}
+            branch={env.branch}
+            repository={repository}
+          />
+        )
+      )}
     </div>
   );
 };

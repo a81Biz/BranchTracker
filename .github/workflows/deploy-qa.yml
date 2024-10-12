@@ -1,0 +1,38 @@
+name: Deploy to QA
+
+on:
+  push:
+    branches:
+      - qa
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if branch is gh-pages
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/gh-pages" ]]; then
+            echo "This is gh-pages branch. Skipping deployment."
+            exit 0
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the application
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          cname: qa.sitio.com
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build

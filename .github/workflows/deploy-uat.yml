@@ -1,0 +1,35 @@
+name: Deploy to UAT
+
+on:
+  pull_request:
+    branches:
+      - uat
+
+jobs:
+  validate-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Fetch tags from QA
+        run: |
+          git fetch origin --tags
+
+      - name: Validate commit from DEV matches tagged commit from QA
+        id: check_commit
+        run: |
+          QA_COMMIT=$(git rev-parse qa-approved-feature-test)
+          DEV_COMMIT=$(git rev-parse origin/feature/test)
+          if [ "$QA_COMMIT" != "$DEV_COMMIT" ]; then
+            echo "The commit in DEV does not match the approved commit in QA. Exiting."
+            exit 1
+          fi
+
+      - name: Deploy to UAT
+        if: success()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          cname: uat.sitio.com

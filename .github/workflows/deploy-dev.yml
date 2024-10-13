@@ -1,27 +1,17 @@
 name: Deploy to DEV
 
 on:
-  push:
-    branches:
-      - dev
-
   pull_request:
     branches:
-      - dev
+      - dev  # Se ejecuta cuando se crea un PR hacia la rama dev
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Check if branch is gh-pages
-        run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/gh-pages" ]]; then
-            echo "This is gh-pages branch. Skipping deployment."
-            exit 0
-          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -31,9 +21,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test -- --coverage
+
       - name: Build the application
-        env:
-          REACT_APP_SECRET_GITHUB_TOKEN: ${{ secrets.SECRET_GITHUB_TOKEN }}
         run: npm run build
 
       - name: Deploy to GitHub Pages

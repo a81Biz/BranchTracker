@@ -1,4 +1,5 @@
 name: Sync master prod
+
 on:
   workflow_run:
     workflows: ["Deploy to Production"]
@@ -29,44 +30,22 @@ jobs:
         run: |
           git push origin master
 
-      - name: Get the branch that made the PR to prod
-        id: get_branch_name
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Fetch the tag with the branch name
         run: |
-          PR_BRANCH=$(gh pr list --base prod --state closed --json headRefName --jq '.[0].headRefName')
-          if [ -z "$PR_BRANCH" ]; then
-            echo "Error: No PR branch found"
-            exit 1
-          fi
-          echo "PR Branch Name: $PR_BRANCH"
-          echo "branch_name=$PR_BRANCH" >> $GITHUB_ENV
+          git fetch --tags
+          DEPLOYED_BRANCH=$(git tag --contains | grep deployed | sed 's/-deployed//')
+          echo "Deployed branch is $DEPLOYED_BRANCH"
+          echo "deployed_branch=$DEPLOYED_BRANCH" >> $GITHUB_ENV
 
-      - name: Get latest commit hash from the branch that made the PR to prod
-        id: get_commit
+      - name: Delete the deployed branch
         run: |
-          if [ -z "${{ env.branch_name }}" ]; then
-            echo "Error: branch_name is empty"
+          if [ -z "${{ env.deployed_branch }}" ]; then
+            echo "Error: No deployed branch found"
             exit 1
           fi
-          COMMIT_HASH=$(git rev-parse origin/${{ env.branch_name }})
-          echo "Commit Hash: $COMMIT_HASH"
-          echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV
-
-      - name: Validate commit matches and delete branch
-        run: |
-          if [ -z "${{ env.branch_name }}" ]; then
-            echo "Error: branch_name is empty, skipping branch deletion"
-            exit 1
-          fi
-          LATEST_COMMIT=$(git rev-parse origin/${{ env.branch_name }})
-          if [ "$LATEST_COMMIT" == "${{ env.commit_hash }}" ]; then
-            if [ "${{ env.branch_name }}" != "master" ] && [ "${{ env.branch_name }}" != "prod" ] && [ "${{ env.branch_name }}" != "uat" ]; then
-              echo "Commit matches. Deleting branch ${{ env.branch_name }}."
-              git push origin --delete ${{ env.branch_name }}
-            else
-              echo "Skipping deletion of protected branch ${{ env.branch_name }} (master, prod, uat)."
-            fi
+          if [ "${{ env.deployed_branch }}" != "master" ] && [ "${{ env.deployed_branch }}" != "prod" ] && [ "${{ env.deployed_branch }}" != "uat" ]; then
+            echo "Deleting deployed branch ${{ env.deployed_branch }}"
+            git push origin --delete ${{ env.deployed_branch }}
           else
-            echo "Commit does not match. Skipping branch deletion."
+            echo "Skipping deletion of protected branch ${{ env.deployed_branch }}"
           fi

@@ -52,7 +52,7 @@ jobs:
           if [ "$LATEST_COMMIT" == "${{ env.commit_hash }}" ]; then
             if [ "${{ env.branch_name }}" != "master" ] && [ "${{ env.branch_name }}" != "prod" ] && [ "${{ env.branch_name }}" != "uat" ]; then
               echo "Commit matches. Deleting branch ${{ env.branch_name }}."
-              git push origin --delete ${{ env.branch_name }}
+              echo "git push origin --delete ${{ env.branch_name }}"
             else
               echo "Skipping deletion of protected branch ${{ env.branch_name }} (master, prod, uat)."
             fi

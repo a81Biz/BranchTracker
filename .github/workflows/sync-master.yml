@@ -1,4 +1,4 @@
-name: Sync master with prod and delete feature branch
+name: Sync master prod 
 
 on:
   workflow_run:

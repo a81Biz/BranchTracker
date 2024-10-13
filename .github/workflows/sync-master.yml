@@ -22,22 +22,20 @@ jobs:
 
       - name: Merge prod into master
         run: |
-          git config --global user.email "${{ secrets.EMAIL }}"
-          git config --global user.name "${{ secrets.REPO_ACTOR }}"
           git merge prod --allow-unrelated-histories
 
       - name: Push to master
         run: |
           git push origin master
 
-      - name: Get the branch that deployed to UAT
+      - name: Get the branch name from pull request
         id: get_branch_name
         run: |
-          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          BRANCH_NAME="${{ github.event.workflow_run.head_branch }}"
           echo "Branch Name: $BRANCH_NAME"
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
 
-      - name: Get latest commit hash from the branch that deployed to UAT
+      - name: Get latest commit hash from the branch that made the PR
         id: get_commit
         run: |
           COMMIT_HASH=$(git rev-parse origin/${{ env.branch_name }})
@@ -48,8 +46,12 @@ jobs:
         run: |
           LATEST_COMMIT=$(git rev-parse origin/${{ env.branch_name }})
           if [ "$LATEST_COMMIT" == "${{ env.commit_hash }}" ]; then
-            echo "Commit in UAT matches. Deleting branch ${{ env.branch_name }}."
-            echo "git push origin --delete ${{ env.branch_name }}"
+            if [ "${{ env.branch_name }}" != "master" ] && [ "${{ env.branch_name }}" != "prod" ] && [ "${{ env.branch_name }}" != "uat" ]; then
+              echo "Commit matches. Deleting branch ${{ env.branch_name }}."
+              echo "git push origin --delete ${{ env.branch_name }}"
+            else
+              echo "Skipping deletion of protected branch ${{ env.branch_name }} (master, prod, uat)."
+            fi
           else
-            echo "Commit in UAT does not match. Skipping branch deletion."
+            echo "Commit does not match. Skipping branch deletion."
           fi

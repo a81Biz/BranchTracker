@@ -36,23 +36,35 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_BRANCH=$(gh pr list --base prod --json headRefName --jq '.[0].headRefName')
+          if [ -z "$PR_BRANCH" ]; then
+            echo "Error: No PR branch found"
+            exit 1
+          fi
           echo "PR Branch Name: $PR_BRANCH"
           echo "branch_name=$PR_BRANCH" >> $GITHUB_ENV
 
       - name: Get latest commit hash from the branch that made the PR to prod
         id: get_commit
         run: |
+          if [ -z "${{ env.branch_name }}" ]; then
+            echo "Error: branch_name is empty"
+            exit 1
+          fi
           COMMIT_HASH=$(git rev-parse origin/${{ env.branch_name }})
           echo "Commit Hash: $COMMIT_HASH"
           echo "commit_hash=$COMMIT_HASH" >> $GITHUB_ENV
 
       - name: Validate commit matches and delete branch
         run: |
+          if [ -z "${{ env.branch_name }}" ]; then
+            echo "Error: branch_name is empty, skipping branch deletion"
+            exit 1
+          fi
           LATEST_COMMIT=$(git rev-parse origin/${{ env.branch_name }})
           if [ "$LATEST_COMMIT" == "${{ env.commit_hash }}" ]; then
             if [ "${{ env.branch_name }}" != "master" ] && [ "${{ env.branch_name }}" != "prod" ] && [ "${{ env.branch_name }}" != "uat" ]; then
               echo "Commit matches. Deleting branch ${{ env.branch_name }}."
-              echo "git push origin --delete ${{ env.branch_name }}"
+              git push origin --delete ${{ env.branch_name }}
             else
               echo "Skipping deletion of protected branch ${{ env.branch_name }} (master, prod, uat)."
             fi

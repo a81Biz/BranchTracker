@@ -1,4 +1,4 @@
-name: Sync master prod
+name: Sync master with prod and delete feature branch
 
 on:
   workflow_run:
@@ -30,14 +30,14 @@ jobs:
         run: |
           git push origin master
 
-      - name: Get the branch name from pull request
+      - name: Get the branch that made the PR to prod
         id: get_branch_name
         run: |
-          BRANCH_NAME="${{ github.event.workflow_run.head_branch }}"
-          echo "Branch Name: $BRANCH_NAME"
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
+          PR_BRANCH=$(gh pr view ${{ github.event.workflow_run.pull_requests[0].url }} --json headRefName --jq .headRefName)
+          echo "PR Branch Name: $PR_BRANCH"
+          echo "branch_name=$PR_BRANCH" >> $GITHUB_ENV
 
-      - name: Get latest commit hash from the branch that made the PR
+      - name: Get latest commit hash from the branch that made the PR to prod
         id: get_commit
         run: |
           COMMIT_HASH=$(git rev-parse origin/${{ env.branch_name }})

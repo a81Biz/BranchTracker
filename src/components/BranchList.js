@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import BranchCard from './BranchCard';
+import PropTypes from 'prop-types';
 
 const BranchList = ({ repositoryName, owner }) => {
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // eslint-disable-next-line no-undef
   const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
 
   useEffect(() => {
@@ -42,6 +42,11 @@ const BranchList = ({ repositoryName, owner }) => {
       ))}
     </div>
   );
+};
+
+BranchList.propTypes = {
+  repositoryName: PropTypes.string.isRequired,
+  owner: PropTypes.string.isRequired,
 };
 
 export default BranchList;

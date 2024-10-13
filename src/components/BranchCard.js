@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
+import PropTypes from 'prop-types';
 
 const BranchCard = ({ branch, owner, repo }) => {
   const [commitDetails, setCommitDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
+  // eslint-disable-next-line no-undef
   const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
 
   useEffect(() => {
@@ -49,6 +52,17 @@ const BranchCard = ({ branch, owner, repo }) => {
       <p>Author: {commitDetails.commit.author.name}</p>
     </div>
   );
+};
+
+BranchCard.propTypes = {
+  branch: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    commit: PropTypes.shape({
+      sha: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
+  owner: PropTypes.string.isRequired,
+  repo: PropTypes.string.isRequired,
 };
 
 export default BranchCard;

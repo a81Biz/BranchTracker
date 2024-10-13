@@ -1,4 +1,4 @@
-name: Sync master prod 
+name: Sync master prod
 
 on:
   workflow_run:
@@ -32,6 +32,8 @@ jobs:
 
       - name: Get the branch that made the PR to prod
         id: get_branch_name
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Se agrega el token de autenticación
         run: |
           PR_BRANCH=$(gh pr view ${{ github.event.workflow_run.pull_requests[0].url }} --json headRefName --jq .headRefName)
           echo "PR Branch Name: $PR_BRANCH"

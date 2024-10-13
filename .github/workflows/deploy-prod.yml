@@ -29,3 +29,16 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
           cname: sitio.com
+        
+      - name: Tag the branch that made the PR to prod
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_BRANCH=$(gh pr list --base prod --state closed --json headRefName --jq '.[0].headRefName')
+          if [ -z "$PR_BRANCH" ]; then
+            echo "Error: No PR branch found"
+            exit 1
+          fi
+          TAG_NAME="${PR_BRANCH}-deployed"
+          git tag -a "$TAG_NAME" -m "Tagging branch $PR_BRANCH after deployment to prod"
+          git push origin "$TAG_NAME"

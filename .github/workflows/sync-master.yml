@@ -1,5 +1,4 @@
 name: Sync master prod
-
 on:
   workflow_run:
     workflows: ["Deploy to Production"]
@@ -35,7 +34,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_BRANCH=$(gh pr list --base prod --json headRefName --jq '.[0].headRefName')
+          PR_BRANCH=$(gh pr list --base prod --state closed --json headRefName --jq '.[0].headRefName')
           if [ -z "$PR_BRANCH" ]; then
             echo "Error: No PR branch found"
             exit 1

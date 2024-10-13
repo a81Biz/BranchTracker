@@ -45,7 +45,7 @@ jobs:
           fi
           if [ "${{ env.deployed_branch }}" != "master" ] && [ "${{ env.deployed_branch }}" != "prod" ] && [ "${{ env.deployed_branch }}" != "uat" ]; then
             echo "Deleting deployed branch ${{ env.deployed_branch }}"
-            git push origin --delete ${{ env.deployed_branch }}
+            echo "git push origin --delete ${{ env.deployed_branch }}"
           else
             echo "Skipping deletion of protected branch ${{ env.deployed_branch }}"
           fi

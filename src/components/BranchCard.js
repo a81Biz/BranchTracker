@@ -9,7 +9,7 @@ const BranchCard = ({ branch, owner, repo }) => {
   const [error, setError] = useState(null);
 
 
-  // eslint-disable-next-line no-undef
+   
   const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
 
   useEffect(() => {
@@ -33,7 +33,7 @@ const BranchCard = ({ branch, owner, repo }) => {
     };
 
     fetchCommitDetails();
-  }, [branch.commit.sha, owner, repo]);
+  }, [GITHUB_TOKEN, branch.commit.sha, owner, repo]);
 
   if (loading) return <div>Loading branch details...</div>;
   if (error) return <div>{error}</div>;

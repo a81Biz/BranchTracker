@@ -7,7 +7,7 @@ const BranchList = ({ repositoryName, owner }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // eslint-disable-next-line no-undef
+   
   const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
 
   useEffect(() => {
@@ -31,7 +31,7 @@ const BranchList = ({ repositoryName, owner }) => {
     };
 
     fetchBranches();
-  }, [repositoryName, owner]);
+  }, [repositoryName, owner, GITHUB_TOKEN]);
 
   if (loading) return <div>Loading branches for {repositoryName}...</div>;
   if (error) return <div>{error}</div>;

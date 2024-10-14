@@ -9,7 +9,7 @@ const Dashboard = ({ repository }) => {
   const [error, setError] = useState(null)
   const [environments, setEnvironments] = useState([])
 
-  // eslint-disable-next-line no-undef
+   
   const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN
 
   useEffect(() => {

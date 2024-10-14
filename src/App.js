@@ -10,7 +10,7 @@ const App = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // eslint-disable-next-line no-undef
+   
   const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN
 
   useEffect(() => {

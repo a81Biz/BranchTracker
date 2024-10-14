@@ -1,9 +1,9 @@
-name: Deploy to DEV
+name: Deploy to DEV with Tests
 
 on:
   pull_request:
     branches:
-      - dev  # Se ejecuta cuando se crea un PR hacia la rama dev
+      - dev
 
 jobs:
   build:
@@ -18,17 +18,17 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies using Yarn
+        run: yarn install  # Aquí cambiamos npm por yarn
 
       - name: Run lint
-        run: npm run lint
+        run: yarn lint  # Cambiamos npm por yarn
 
       - name: Run tests
-        run: npm run test -- --coverage
+        run: yarn test --coverage  # Cambiamos npm por yarn
 
       - name: Build the application
-        run: npm run build
+        run: yarn build  # Cambiamos npm por yarn
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

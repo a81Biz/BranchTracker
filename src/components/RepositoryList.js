@@ -1,5 +1,5 @@
 import React from 'react';
-import BranchList from './BranchList';
+import PropTypes from 'prop-types';
 
 const RepositoryList = ({ repositories }) => {
   return (
@@ -12,6 +12,15 @@ const RepositoryList = ({ repositories }) => {
       ))}
     </div>
   );
+};
+
+RepositoryList.propTypes = {
+  repositories: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+    })
+  ).isRequired,
 };
 
 export default RepositoryList;

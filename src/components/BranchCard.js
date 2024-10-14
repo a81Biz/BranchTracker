@@ -1,11 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import PropTypes from 'prop-types';
 
 const BranchCard = ({ branch, owner, repo }) => {
   const [commitDetails, setCommitDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
+   
   const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
 
   useEffect(() => {
@@ -29,7 +33,7 @@ const BranchCard = ({ branch, owner, repo }) => {
     };
 
     fetchCommitDetails();
-  }, [branch.commit.sha, owner, repo]);
+  }, [GITHUB_TOKEN, branch.commit.sha, owner, repo]);
 
   if (loading) return <div>Loading branch details...</div>;
   if (error) return <div>{error}</div>;
@@ -49,6 +53,17 @@ const BranchCard = ({ branch, owner, repo }) => {
       <p>Author: {commitDetails.commit.author.name}</p>
     </div>
   );
+};
+
+BranchCard.propTypes = {
+  branch: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    commit: PropTypes.shape({
+      sha: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
+  owner: PropTypes.string.isRequired,
+  repo: PropTypes.string.isRequired,
 };
 
 export default BranchCard;

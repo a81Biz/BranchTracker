@@ -1,6 +1,7 @@
 name: Sync master prod
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["Deploy to Production"]
     types:
@@ -33,7 +34,11 @@ jobs:
       - name: Fetch the tag with the branch name
         run: |
           git fetch --tags
-          DEPLOYED_BRANCH=$(git tag --contains | grep deployed | sed 's/-deployed//')
+          DEPLOYED_BRANCH=$(git tag | grep 'deployed' | sed 's/-deployed//')
+          if [ -z "$DEPLOYED_BRANCH" ]; then
+            echo "Error: No deployed branch found"
+            exit 1
+          fi
           echo "Deployed branch is $DEPLOYED_BRANCH"
           echo "deployed_branch=$DEPLOYED_BRANCH" >> $GITHUB_ENV
 

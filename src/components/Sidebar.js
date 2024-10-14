@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types'
 
 const Sidebar = ({ repositories, onRepoSelect }) => {
   return (
@@ -16,7 +17,17 @@ const Sidebar = ({ repositories, onRepoSelect }) => {
         ))}
       </ul>
     </div>
-  );
-};
+  )
+}
 
-export default Sidebar;
+Sidebar.propTypes = {
+  repositories: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired
+    })
+  ).isRequired,
+  onRepoSelect: PropTypes.func.isRequired
+}
+
+export default Sidebar

@@ -1,10 +1,6 @@
-name: Deploy to DEV
+name: Deploy to DEV with Tests
 
 on:
-  push:
-    branches:
-      - dev
-
   pull_request:
     branches:
       - dev
@@ -12,29 +8,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Check if branch is gh-pages
-        run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/gh-pages" ]]; then
-            echo "This is gh-pages branch. Skipping deployment."
-            exit 0
-          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies using Yarn
+        run: yarn install  # Aquí cambiamos npm por yarn
+
+      - name: Run lint
+        run: yarn lint  # Cambiamos npm por yarn
+
+      - name: Run tests
+        run: yarn test --coverage  # Cambiamos npm por yarn
 
       - name: Build the application
-        env:
-          REACT_APP_SECRET_GITHUB_TOKEN: ${{ secrets.SECRET_GITHUB_TOKEN }}
-        run: npm run build
+        run: yarn build  # Cambiamos npm por yarn
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
